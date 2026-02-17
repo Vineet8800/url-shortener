@@ -1,12 +1,12 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt
 
-from app.core.security import SECRET_KEY, ALGORITHM
+from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.users import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+auth_scheme = HTTPBearer()
 
 
 def get_db():
@@ -18,11 +18,12 @@ def get_db():
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: HTTPAuthorizationCredentials = Depends(auth_scheme),
     db=Depends(get_db),
 ):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        token = token.credentials
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
