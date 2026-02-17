@@ -12,3 +12,13 @@ class URLResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserUrlResponse(BaseModel):
+    short_code: str
+    long_url: str
+    expiration: datetime | None
+    clicks: int
+
+    class Config:
+        from_attributes = True
