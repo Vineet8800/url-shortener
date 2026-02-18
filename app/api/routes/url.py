@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, UTC
 
 from app.api.deps import get_db, get_current_user
-from app.core.config import settings
+from app.core.settings import settings
 from app.schemas.url import URLCreate, URLResponse, UserUrlResponse
-from app.services.cache import get_cached_url, set_cached_url
+from app.services.cache import get_cached_url, set_cached_url, increment_cache
 from app.services.shortener import generate_unique_short_code
 from app.models.url import URL
 from app.models.users import User
@@ -65,6 +65,7 @@ async def redirect_to_original(
 ):
     cached_url = await get_cached_url(short_code)
     if cached_url:
+        await increment_cache(short_code)
         return RedirectResponse(cached_url)
 
     url = (
@@ -81,9 +82,6 @@ async def redirect_to_original(
 
     ttl = int((url.expires_at - datetime.now(UTC)).total_seconds()) if url.expires_at else 3600
     await set_cached_url(short_code, url.original_url, ttl)
-
-    # Increment click count
-    url.clicks += 1
-    db.commit()
+    await increment_cache(short_code)
 
     return RedirectResponse(url.original_url)

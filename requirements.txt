@@ -7,3 +7,6 @@ psycopg[binary]
 bcrypt==3.2.2
 passlib==1.7.4
 redis>=5.0
+celery>=5.3
+python-jose[cryptography]
+email-validator
