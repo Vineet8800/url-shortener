@@ -24,9 +24,7 @@ A lightweight and scalable **URL Shortener** service that converts long URLs int
 - 🔗 **Shorten URLs:** Convert long URLs into compact, unique codes.
 - 🚀 **Fast Redirection:** High-performance redirection to the original destination.
 - 📊 **Analytics:** Track click counts, referrers, and timestamps *(Optional)*.
-- 🎨 **Custom Aliases:** Allow users to define custom short codes (e.g., `mysite.com/sale`) *(Optional)*.
 - ⏳ **Expiration:** Set time-to-live (TTL) for temporary links *(Optional)*.
-- 🛡️ **Rate Limiting:** Prevent abuse of the API.
 - 🐳 **Docker Support:** Containerized for easy deployment.
 
 ---
@@ -45,15 +43,16 @@ A lightweight and scalable **URL Shortener** service that converts long URLs int
 ```text
 url-shortener/
 ├── app/
-│   ├── config/         # Database and environment configuration
-│   ├── controllers/    # Request handlers (logic for endpoints)
-│   ├── models/         # Database schemas (Mongoose/SQL models)
-│   ├── routes/         # API route definitions
+│   ├── api/            # API route definitions
+│   ├── core/           # Settings and security
+│   ├── db/             # Sessions and configurations
+│   ├── models/         # Database schemas (Postgresql models)
+│   ├── schemas/        # object representation pydantic models
 │   ├── services/       # Business logic (hashing, validation)
-│   └── utils/          # Helper functions (error handling, validation)
-├── tests/              # Unit and integration tests
+│   └── tasks/          # Async tasks
 ├── .env                # Environment variables
-├── package.json        # Dependencies and scripts (or requirements.txt)
+├── .env.template       # Environment variables template
+├── requirements.txt    # Dependencies and scripts (or requirements.txt)
 └── README.md           # Project documentation
 ```
 
@@ -71,21 +70,19 @@ Follow these steps to set up the project locally.
 
 1. **Clone the repository**
    ```bash
-   git clone [https://github.com/yourusername/url-shortener.git](https://github.com/yourusername/url-shortener.git)
+   git clone https://github.com/Vineet8800/url-shortener.git
    cd url-shortener
    ```
 
 2. **Install dependencies**
    ```bash
-   # For Node.js
-   npm install
-
    # For Python
    pip install -r requirements.txt
    ```
 
 3. **Configure Environment Variables**
-   Create a `.env` file in the root directory using `.env.template`
+   Create a `.env` file in the root directory using `.env.template` and add required configuration 
+
 
 4. **Run the application**
    ```bash
@@ -102,11 +99,12 @@ The server should now be running on your configured port.
 To run this project, you will need to add the following environment variables to your `.env` file:
 
 ```properties
-PORT=5000
-DATABASE_URL=mongodb://localhost:27017/urlshortener
-BASE_URL=http://localhost:5000
-REDIS_URL=redis://localhost:6379  # Optional
-JWT_SECRET=your_super_secret_key # Optional (if using Auth)
+DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/url_shortener
+BASE_URL=http://localhost:8000
+SECRET_KEY=19f2c7e3a4b8d6c3f0de5a1b9d2c7f3e3a6d3b0c1e9f3a2b4c6de33f1a3cb7d
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
 ```
 
 ---
@@ -114,13 +112,13 @@ JWT_SECRET=your_super_secret_key # Optional (if using Auth)
 ## 📡 API Endpoints
 
 ### 1. Shorten a URL
-**POST** `/api/url/shorten`
+**POST** `/shorten`
 
 **Body:**
 ```json
 {
-  "longUrl": "[https://www.very-long-website.com/content/article/123](https://www.very-long-website.com/content/article/123)",
-  "customCode": "my-article"
+  "original_url": "https://www.very-long-website.com/content/article/123",
+  "expires_at": "2026-02-23T06:07:12.047Z"
 }
 ```
 
@@ -133,25 +131,25 @@ JWT_SECRET=your_super_secret_key # Optional (if using Auth)
 
 ### 2. Redirect
 **GET** `/:code`
-- Redirects to the original `longUrl`.
+- Redirects to the original `original_url`.
 
-### 3. Get URL Stats (Optional)
-**GET** `/api/url/stats/:code`
+### 3. Get URL Stats for current user
+**GET** `/urls`
 
 **Response:**
 ```json
-{
-  "urlCode": "my-article",
+[{
+  "short_code": "my-article",
+  "long_url": "https://www.very-long-website.com/content/article/123",
   "clicks": 42,
-  "lastClicked": "2023-10-27T10:00:00Z"
-}
+  "expiration": "2023-10-27T10:00:00Z"
+}]
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Add User Authentication (OAuth/JWT)
 - [ ] Implement QR Code generation for links
 - [ ] Create a frontend dashboard (React)
 - [ ] Add unit tests
@@ -171,4 +169,4 @@ Contributions are welcome! Please follow these steps:
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License.
